@@ -54,10 +54,10 @@ sub SingleDriverRoute10Stops {
         parameters => $parameters
     );
 
-    my $dataObject = $route4Me->runOptimization($optimizationParameters);
-
-
     my $errorString = "";
+    my $dataObject = $route4Me->runOptimization($optimizationParameters, \$errorString);
+
+    print $errorString. "\n";
     ExamplesInfrastructure->PrintExampleOptimizationResult("SingleDriverRoute10Stops", $dataObject, $errorString);
 
     return $dataObject;

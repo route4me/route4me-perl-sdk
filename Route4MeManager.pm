@@ -12,10 +12,13 @@ use Class::Struct;
 
 sub new
 {
-    my $class = shift;
+    my ( $class, $apiKey, $defaultTimeOut) = @_;
+
+    $defaultTimeOut = 30 unless defined $defaultTimeOut;
+
     my $self = {
-        _apiKey         => shift,
-        _defaultTimeOut => shift
+        _apiKey         => $apiKey,
+        _defaultTimeOut => $defaultTimeOut
     };
 
     bless $self, $class;
@@ -39,26 +42,9 @@ sub runOptimization {
 
     my $content = R4MeUtils->serializeObjectToJson( $optimizationParameters );
 
-    my $dataObject = $self->_request('POST', R4MEInfrastructureSettings->ApiHost, $content);
+    my $dataObject = $self->getJsonObjectFromAPI('POST', R4MEInfrastructureSettings->ApiHost, $content, $errors);
 
-    my $response = JSON->new->decode( $dataObject->{'content'} );
-
-    my $object = bless( $response, 'DataObject' );
-
-    foreach my $address (@{$object->addresses})
-    {
-        $address = bless( $address, 'Address' );
-    }
-
-    foreach my $route (@{$object->routes}) {
-        $route = bless( $route, 'DataObjectRoute');
-        foreach my $routeAddress (@{$route->addresses})
-        {
-            $routeAddress = bless( $routeAddress, 'Address' );
-        }
-    }
-
-    return $object;
+    return $dataObject;
 }
 
 sub addRouteDestinations {
@@ -70,17 +56,14 @@ sub addRouteDestinations {
 
     my $content = R4MeUtils->serializeObjectToJson( $optimizationParameters );
 
-    my $dataObject = $self->_request('PUT', R4MEInfrastructureSettings->RouteHost, $content, {'route_id' => $route_id});
+    my $object = $self->getJsonObjectFromAPI('PUT', R4MEInfrastructureSettings->RouteHost, $content, {'route_id' => $route_id}, $errors);
 
-    my $response = JSON->new->decode( $dataObject->{'content'} );
-
-    my $object = bless( $response, 'DataObject' );
+    if (!$object) {return;}
 
     my @destinantionIds = ();
 
     foreach my $address (@{$object->addresses})
     {
-        $address = bless( $address, 'Address' );
         foreach my $addressNew ( @{$addresses} ) {
             if ($address->address eq $addressNew->address
                 && $address->lat == $addressNew->lat
@@ -122,6 +105,44 @@ sub moveDestinationToRoute {
         return 0;
     }
 
+}
+
+
+sub getJsonObjectFromAPI {
+    my ( $self, $method, $url, $content, $params, $errorMessage );
+    if (@_ == 6)  {
+        ( $self, $method, $url, $content, $params, $errorMessage ) = @_;
+    } else {
+        ( $self, $method, $url, $content, $errorMessage ) = @_;
+    }
+
+    my $dataObject = $self->_request($method, $url, $content, $params);
+
+    if (!$dataObject->{'success'}) {
+        $$errorMessage = $dataObject->{'content'};
+        return;
+    } else {
+        my $response = JSON->new->decode( $dataObject->{'content'} );
+
+        my $object = bless( $response, 'DataObject' );
+
+        foreach my $address (@{$object->addresses})
+        {
+            $address = bless( $address, 'Address' );
+        }
+
+        if ($object->routes) {
+            foreach my $route (@{$object->routes}) {
+                $route = bless( $route, 'DataObjectRoute');
+                foreach my $routeAddress (@{$route->addresses})
+                {
+                    $routeAddress = bless( $routeAddress, 'Address' );
+                }
+            }
+        }
+
+        return $object;
+    }
 }
 
 sub _post_form {
@@ -174,7 +195,7 @@ sub _request {
 sub _createHttpClient {
     my ( $self ) = @_;
     my $headers = { accept => 'application/json' };
-    my $client = HTTP::Tiny->new( headers => $headers );
+    my $client = HTTP::Tiny->new( headers => $headers, timeout => $self->{_defaultTimeOut} );
 
     return $client;
 }

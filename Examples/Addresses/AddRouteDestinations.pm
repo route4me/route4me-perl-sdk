@@ -4,7 +4,7 @@ use warnings FATAL => 'all';
 use Data::Dumper;
 
 sub AddRouteDestinations {
-    my ( $self, $routeId, $errors ) = @_;
+    my ( $self, $routeId) = @_;
 
     my $route4Me = Route4MeManager->new(ExamplesInfrastructure->ApiKey);
 
@@ -13,7 +13,8 @@ sub AddRouteDestinations {
         Address->new(address => "222 Blake Cir Milledgeville GA 31061", lat => 33.177852, lng => -83.263535, time => 0, curbside_lat => undef, curbside_lng => undef)
     ];
 
-    my @destinationIds = $route4Me->addRouteDestinations($routeId, $addresses, $errors);
+    my $errors;
+    my @destinationIds = $route4Me->addRouteDestinations($routeId, $addresses, \$errors);
 
     if (@destinationIds) {
         print "AddRouteDestinations executed successfully";

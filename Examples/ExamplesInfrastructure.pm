@@ -10,7 +10,7 @@ use constant {
 sub PrintExampleOptimizationResult {
     my ( $self, $exampleName, $dataObject, $errorString ) = @_;
     print "\n";
-    if (defined $dataObject) {
+    if ($dataObject) {
         printf ("%s executed successfully", $exampleName);
         print "\n";
         print "\n";

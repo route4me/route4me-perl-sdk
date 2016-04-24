@@ -22,8 +22,7 @@ my $routeId_SingleDriverRoute10Stops = ($dataObject && $dataObject->routes && sc
     @{$dataObject->routes}[0]->route_id :
     undef;
 
-my $errorString;
-my @destinationIds = AddRouteDestinations->AddRouteDestinations($routeId_SingleDriverRoute10Stops, $errorString);
+my @destinationIds = AddRouteDestinations->AddRouteDestinations($routeId_SingleDriverRoute10Stops);
 
 if (@destinationIds && scalar @destinationIds > 0)
 {

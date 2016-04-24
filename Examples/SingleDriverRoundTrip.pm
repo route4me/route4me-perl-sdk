@@ -52,10 +52,10 @@ sub SingleDriverRoundTrip {
         parameters => $parameters
     );
 
-    my $dataObject = $route4Me->runOptimization($optimizationParameters);
-
-
     my $errorString = "";
+
+    my $dataObject = $route4Me->runOptimization($optimizationParameters, \$errorString);
+
     ExamplesInfrastructure->PrintExampleOptimizationResult("SingleDriverRoundTrip", $dataObject, $errorString);
 
     return $dataObject;
