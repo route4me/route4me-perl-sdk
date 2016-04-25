@@ -1,4 +1,4 @@
-Access Route4Me's logistics-as-a-service API using our PHP SDK
+Access Route4Me's logistics-as-a-service API using our Perl SDK
 -------------------
 
 
