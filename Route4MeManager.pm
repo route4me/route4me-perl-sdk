@@ -9,6 +9,8 @@ use URI;
 use URI::QueryParam;
 use R4MEInfrastructureSettings;
 use Class::Struct;
+use DataTypes::Metric;
+use DataTypes::OptimizationState;
 
 sub new
 {

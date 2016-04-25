@@ -8,6 +8,11 @@ use Examples::Addresses::RemoveRouteDestination;
 use Examples::Addresses::MoveDestinationToRoute;
 use Examples::SingleDriverRoundTrip;
 use Examples::SingleDriverRoundTripGeneric;
+use Examples::MultipleDepotMultipleDriver;
+use Examples::MultipleDepotMultipleDriverTimeWindow;
+use Examples::SingleDepotMultipleDriverNoTimeWindow;
+use Examples::MultipleDepotMultipleDriverWith24StopsTimeWindow;
+use Examples::SingleDriverMultipleTimeWindows;
 
 my $old_fh = select(STDOUT);
 $| = 1;
@@ -60,4 +65,37 @@ if ($routeIdToMoveTo && $routeDestinationIdToMove != 0 && $afterDestinationIdToM
     print "\n";
 }
 
-my $optimizationProblemID = SingleDriverRoundTripGeneric->SingleDriverRoundTripGeneric()
+my $optimizationProblemID = SingleDriverRoundTripGeneric->SingleDriverRoundTripGeneric(); # TODO
+
+$dataObject = MultipleDepotMultipleDriver->MultipleDepotMultipleDriver();
+
+my $routeId_MultipleDepotMultipleDriver = ($dataObject && $dataObject->routes && scalar @{$dataObject->routes} > 0) ?
+    @{$dataObject->routes}[0]->route_id :
+    undef;
+
+$dataObject = MultipleDepotMultipleDriverTimeWindow->MultipleDepotMultipleDriverTimeWindow();
+
+my $routeId_MultipleDepotMultipleDriverTimeWindow = ($dataObject && $dataObject->routes && scalar @{$dataObject->routes} > 0) ?
+    @{$dataObject->routes}[0]->route_id :
+    undef;
+
+$dataObject = SingleDepotMultipleDriverNoTimeWindow->SingleDepotMultipleDriverNoTimeWindow();
+
+my $routeId_SingleDepotMultipleDriverNoTimeWindow = ($dataObject && $dataObject->routes && scalar @{$dataObject->routes} > 0) ?
+    @{$dataObject->routes}[0]->route_id :
+    undef;
+
+$dataObject = MultipleDepotMultipleDriverWith24StopsTimeWindow->MultipleDepotMultipleDriverWith24StopsTimeWindow();
+
+my $routeId_MultipleDepotMultipleDriverWith24StopsTimeWindow = ($dataObject && $dataObject->routes && scalar @{$dataObject->routes} > 0) ?
+    @{$dataObject->routes}[0]->route_id :
+    undef;
+
+$dataObject = SingleDriverMultipleTimeWindows->SingleDriverMultipleTimeWindows();
+
+my $routeId_SingleDriverMultipleTimeWindows = ($dataObject && $dataObject->routes && scalar @{$dataObject->routes} > 0) ?
+    @{$dataObject->routes}[0]->route_id :
+    undef;
+
+
+

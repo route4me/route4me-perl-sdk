@@ -2,6 +2,7 @@ package ExamplesInfrastructure;
 use strict;
 use warnings FATAL => 'all';
 use Data::Dumper;
+use DataTypes::OptimizationState;
 
 use constant {
     ApiKey => "11111111111111111111111111111111"
@@ -17,7 +18,7 @@ sub PrintExampleOptimizationResult {
 
         printf ("Optimization Problem ID: %s", $dataObject->optimization_problem_id);
         print "\n";
-        printf ("State: %s", $dataObject->state);
+        printf ("State: %s", OptimizationState->get_optimization_state($dataObject->state));
         print "\n";
 
         foreach my $err (@{$dataObject->user_errors}) {
