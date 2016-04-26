@@ -11,6 +11,7 @@ use R4MEInfrastructureSettings;
 use Class::Struct;
 use DataTypes::Metric;
 use DataTypes::OptimizationState;
+use DataTypes::DataObjectOptimizations;
 
 sub new
 {
@@ -45,6 +46,39 @@ sub runOptimization {
     my $content = R4MeUtils->serializeObjectToJson( $optimizationParameters );
 
     my $dataObject = $self->getJsonObjectFromAPI('POST', R4MEInfrastructureSettings->ApiHost, $content, $errors);
+
+    return $dataObject;
+}
+
+sub getOptimization {
+    my ( $self, $optimizationParameters, $errors ) = @_;
+
+    my $params = {"optimization_problem_id" => $optimizationParameters->optimization_problem_id,
+        "reoptimize" => $optimizationParameters->reoptimize,
+        "show_directions" => $optimizationParameters->show_directions,
+    };
+    my $dataObject = $self->getJsonObjectFromAPI('GET', R4MEInfrastructureSettings->ApiHost, undef, $params, $errors);
+
+    return $dataObject;
+}
+
+sub getOptimizations {
+    my ( $self, $parameters, $errors ) = @_;
+
+    my $params = {"route_id" => $parameters->route_id,
+        "directions" => $parameters->directions,
+        "route_path_output" => $parameters->route_path_output,
+        "device_tracking_history" => $parameters->route_path_output,
+        "limit" => $parameters->limit,
+        "offset" => $parameters->offset,
+        "original" => $parameters->original,
+        "notes" => $parameters->notes,
+        "query" => $parameters->query,
+        "reoptimize" => $parameters->reoptimize,
+        "recompute_directions" => $parameters->recompute_directions,
+        "parameters" => $parameters->parameters,
+    };
+    my $dataObject = $self->getJsonObjectFromAPI('GET', R4MEInfrastructureSettings->ApiHost, undef, $params, $errors);
 
     return $dataObject;
 }
@@ -109,7 +143,6 @@ sub moveDestinationToRoute {
 
 }
 
-
 sub getJsonObjectFromAPI {
     my ( $self, $method, $url, $content, $params, $errorMessage );
     if (@_ == 6)  {
@@ -125,6 +158,62 @@ sub getJsonObjectFromAPI {
         return;
     } else {
         my $response = JSON->new->decode( $dataObject->{'content'} );
+
+        my $object;
+
+        if ($response->{'optimizations'}) {
+            $object = bless( $response, 'DataObjectOptimizations');
+
+            foreach my $optimization (@{$object->optimizations})
+            {
+                $optimization = bless( $optimization, 'DataObject' );
+            }
+
+        } else {
+            $object =  bless( $response, 'DataObject' );
+
+            if ($object->addresses) {
+                foreach my $address (@{$object->addresses})
+                {
+                    $address = bless( $address, 'Address' );
+                }
+            }
+
+            if ($object->routes) {
+                foreach my $route (@{$object->routes}) {
+                    $route = bless( $route, 'DataObjectRoute');
+                    foreach my $routeAddress (@{$route->addresses})
+                    {
+                        $routeAddress = bless( $routeAddress, 'Address' );
+                    }
+                }
+            }
+
+        }
+
+        return $object;
+    }
+}
+
+
+
+sub getJsonObjectFromAPI_debug {
+    my ( $self, $method, $url, $content, $params, $errorMessage );
+    if (@_ == 6)  {
+        ( $self, $method, $url, $content, $params, $errorMessage ) = @_;
+    } else {
+        ( $self, $method, $url, $content, $errorMessage ) = @_;
+    }
+
+    my $dataObject = $self->_request($method, $url, $content, $params);
+
+    if (!$dataObject->{'success'}) {
+        $$errorMessage = $dataObject->{'content'};
+        return;
+    } else {
+        my $response = JSON->new->decode( $dataObject->{'content'} );
+
+        print Dumper($response);
 
         my $object = bless( $response, 'DataObject' );
 

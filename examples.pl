@@ -13,6 +13,8 @@ use Examples::MultipleDepotMultipleDriverTimeWindow;
 use Examples::SingleDepotMultipleDriverNoTimeWindow;
 use Examples::MultipleDepotMultipleDriverWith24StopsTimeWindow;
 use Examples::SingleDriverMultipleTimeWindows;
+use Examples::Optimizations::GetOptimization;
+use Examples::Optimizations::GetOptimizations;
 
 my $old_fh = select(STDOUT);
 $| = 1;
@@ -97,5 +99,11 @@ my $routeId_SingleDriverMultipleTimeWindows = ($dataObject && $dataObject->route
     @{$dataObject->routes}[0]->route_id :
     undef;
 
+if ($optimizationProblemID) {
+    GetOptimization->GetOptimization($optimizationProblemID);
+} else {
+    print "GetOptimization not called. optimizationProblemID == null.\n";
+}
 
+GetOptimizations->GetOptimizations();
 
