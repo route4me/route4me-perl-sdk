@@ -15,12 +15,14 @@ sub GetOptimizations {
 
     my $dataObjects = $route4Me->getOptimizations($queryParameters, $errorString);
 
+    print "\n";
+
     if ($dataObjects) {
         printf "GetOptimizations executed successfully, %s optimizations returned\n\n", scalar @{$dataObjects->optimizations};
 
         foreach my $dataObject (@{$dataObjects->optimizations})
         {
-            printf "Optimization Problem ID:  %s\n\n", $dataObject->optimization_problem_id;
+            printf "Optimization Problem ID:  %s\n", $dataObject->optimization_problem_id;
         }
 
     } else {

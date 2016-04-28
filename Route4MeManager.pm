@@ -8,10 +8,28 @@ use Data::Dumper;
 use URI;
 use URI::QueryParam;
 use R4MEInfrastructureSettings;
-use Class::Struct;
+use DataTypes::QueryStringAttribute;
 use DataTypes::Metric;
 use DataTypes::OptimizationState;
 use DataTypes::DataObjectOptimizations;
+use DataTypes::Address;
+use DataTypes::AddressNote;
+use DataTypes::RouteParameters;
+use DataTypes::AlgorithmType;
+use DataTypes::Optimize;
+use DataTypes::DistanceUnit;
+use DataTypes::DeviceType;
+use DataTypes::OptimizationParameters;
+use DataTypes::DataObject;
+use DataTypes::DataObjectRoute;
+use DataTypes::User;
+use DataTypes::Links;
+use DataTypes::GetActivitiesResponse;
+use DataTypes::Activity;
+use QueryTypes::HttpMethodType;
+use QueryTypes::ActivityParameters;
+use R4MeUtils;
+use R4MEInfrastructureSettings;
 
 sub new
 {
@@ -45,11 +63,24 @@ sub runOptimization {
 
     my $content = R4MeUtils->serializeObjectToJson( $optimizationParameters );
 
-    my $dataObject = $self->getJsonObjectFromAPI('POST', R4MEInfrastructureSettings->ApiHost, $content, $errors);
+    my $dataObject = $self->getJsonObjectFromAPI('DataObject', HttpMethodType->Post, R4MEInfrastructureSettings->ApiHost, $content, $errors);
 
     return $dataObject;
 }
 
+sub updateOptimization {
+
+    my ( $self, $optimizationParameters, $errors ) = @_;
+
+    my $params = _get_query_string_parameters($optimizationParameters);
+
+    my $content = R4MeUtils->serializeObjectToJson( _get_non_query_string_parameters($optimizationParameters) );
+
+    my $dataObject = $self->getJsonObjectFromAPI('DataObject', HttpMethodType->Put, R4MEInfrastructureSettings->ApiHost, $content, $params, $errors);
+
+    return $dataObject;
+
+}
 sub getOptimization {
     my ( $self, $optimizationParameters, $errors ) = @_;
 
@@ -57,7 +88,7 @@ sub getOptimization {
         "reoptimize" => $optimizationParameters->reoptimize,
         "show_directions" => $optimizationParameters->show_directions,
     };
-    my $dataObject = $self->getJsonObjectFromAPI('GET', R4MEInfrastructureSettings->ApiHost, undef, $params, $errors);
+    my $dataObject = $self->getJsonObjectFromAPI('DataObject', HttpMethodType->Get, R4MEInfrastructureSettings->ApiHost, undef, $params, $errors);
 
     return $dataObject;
 }
@@ -78,9 +109,147 @@ sub getOptimizations {
         "recompute_directions" => $parameters->recompute_directions,
         "parameters" => $parameters->parameters,
     };
-    my $dataObject = $self->getJsonObjectFromAPI('GET', R4MEInfrastructureSettings->ApiHost, undef, $params, $errors);
+    my $dataObject = $self->getJsonObjectFromAPI('DataObjectOptimizations', HttpMethodType->Get, R4MEInfrastructureSettings->ApiHost, undef, $params, $errors);
 
     return $dataObject;
+}
+
+sub deleteRoutes {
+
+}
+
+sub duplicateRoute {
+
+}
+
+sub getRoute {
+    my ($self, $routeParameters, $errors) = @_;
+
+    my $params = _get_query_string_parameters($routeParameters);
+
+    my $content = R4MeUtils->serializeObjectToJson( _get_non_query_string_parameters($routeParameters) );
+
+    my $result = $self->getJsonObjectFromAPI('DataObjectRoute', HttpMethodType->Get, R4MEInfrastructureSettings->RouteHost, $content, $params, $errors);
+
+    return $result;
+
+}
+
+sub getRoutes {
+    my ($self, $routeParameters, $errors) = @_;
+
+    my $params = _get_query_string_parameters($routeParameters);
+
+    my $content = R4MeUtils->serializeObjectToJson( _get_non_query_string_parameters($routeParameters) );
+
+    my @result = $self->getJsonObjectFromAPI('ArrayRef[DataObjectRoute]', HttpMethodType->Get, R4MEInfrastructureSettings->RouteHost, $content, $params, $errors);
+
+    return @result;
+
+}
+
+sub updateRoute {
+    my ($self, $routeParameters, $errors) = @_;
+
+    my $params = _get_query_string_parameters($routeParameters);
+
+    my $content = R4MeUtils->serializeObjectToJson( _get_non_query_string_parameters($routeParameters) );
+
+    my $result = $self->getJsonObjectFromAPI('DataObjectRoute', HttpMethodType->Put, R4MEInfrastructureSettings->RouteHost, $content, $params, $errors);
+
+    return $result;
+}
+
+sub getUsers {
+    my ($self, $errors) = @_;
+
+    my @result = $self->getJsonObjectFromAPI('ArrayRef[User]', HttpMethodType->Get, R4MEInfrastructureSettings->GetUsersHost, undef, $errors);
+
+    return @result;
+
+}
+
+sub getActivities {
+    my ($self, $activityParameters, $errors) = @_;
+
+    my $params = _get_query_string_parameters($activityParameters);
+
+    my $content = R4MeUtils->serializeObjectToJson ( _get_non_query_string_parameters($activityParameters) );
+
+    my $result = $self->getJsonObjectFromAPI('GetActivitiesResponse', HttpMethodType->Get, R4MEInfrastructureSettings->GetActivitiesHost, $content, $params, $errors);
+
+    return $result;
+
+}
+
+sub getAddress {
+    my ($self, $addressParameters, $errors) = @_;
+
+    my $params = _get_query_string_parameters($addressParameters);
+
+    my $result = $self->getJsonObjectFromAPI('Address', HttpMethodType->Get, R4MEInfrastructureSettings->GetAddress, undef, $params, $errors);
+
+    return $result;
+
+}
+
+sub addAddressNote {
+    my ($self, $noteParameters, $noteContents, $errorString) = @_;
+
+    my $params = {%$noteParameters};
+
+    my $form_data = {};
+
+    my $strUpdateType = "unclassified";
+    if ($noteParameters->strUpdateType && length $noteParameters->strUpdateType) {
+        $strUpdateType = $noteParameters->strUpdateType;
+    }
+
+    $form_data->{'strUpdateType'} = $strUpdateType;
+    $form_data->{'strNoteContents'} = $noteContents;
+
+    my $response = $self->_post_form(R4MEInfrastructureSettings->AddRouteNotesHost, $form_data, $params);
+
+    my $content = JSON->new->decode( $response->{'content'} );
+
+    if ($content)
+    {
+        if ($content->{'note'})
+        {
+            return $content->{'note'};
+        }
+        else
+        {
+            if (!$content->{'status'})
+            {
+                $errorString = "Note not added";
+            }
+            return undef;
+        }
+    }
+    else
+    {
+        return undef;
+    }
+
+}
+
+sub getAddressNotes {
+    my ($self, $noteParameters, $errors) = @_;
+
+    my $addressParameters = AddressParameters->new(
+        route_id => $noteParameters->route_id,
+        route_destination_id => $noteParameters->address_id,
+        notes => 1
+    );
+
+    my $address = $self->getAddress($addressParameters, $errors);
+
+    if ($address) {
+        return @{$address->notes};
+    } else {
+        return undef;
+    }
 }
 
 sub addRouteDestinations {
@@ -92,7 +261,7 @@ sub addRouteDestinations {
 
     my $content = R4MeUtils->serializeObjectToJson( $optimizationParameters );
 
-    my $object = $self->getJsonObjectFromAPI('PUT', R4MEInfrastructureSettings->RouteHost, $content, {'route_id' => $route_id}, $errors);
+    my $object = $self->getJsonObjectFromAPI('DataObject', HttpMethodType->Put, R4MEInfrastructureSettings->RouteHost, $content, {'route_id' => $route_id}, $errors);
 
     if (!$object) {return;}
 
@@ -116,7 +285,7 @@ sub addRouteDestinations {
 sub removeRouteDestination {
     my ( $self, $routeId, $destinationId, $errorString ) = @_;
 
-    my $dataObject = $self->_request('DELETE', R4MEInfrastructureSettings->GetAddress, undef,
+    my $dataObject = $self->_request(HttpMethodType->Delete, R4MEInfrastructureSettings->GetAddress, undef,
         {'route_id' => $routeId, route_destination_id => $destinationId });
 
     my $response = JSON->new->decode( $dataObject->{'content'} );
@@ -144,11 +313,11 @@ sub moveDestinationToRoute {
 }
 
 sub getJsonObjectFromAPI {
-    my ( $self, $method, $url, $content, $params, $errorMessage );
-    if (@_ == 6)  {
-        ( $self, $method, $url, $content, $params, $errorMessage ) = @_;
+    my ( $self, $returnType, $method, $url, $content, $params, $errorMessage );
+    if (@_ == 7)  {
+        ( $self, $returnType, $method, $url, $content, $params, $errorMessage ) = @_;
     } else {
-        ( $self, $method, $url, $content, $errorMessage ) = @_;
+        ( $self, $returnType, $method, $url, $content, $errorMessage ) = @_;
     }
 
     my $dataObject = $self->_request($method, $url, $content, $params);
@@ -157,83 +326,87 @@ sub getJsonObjectFromAPI {
         $$errorMessage = $dataObject->{'content'};
         return;
     } else {
-        my $response = JSON->new->decode( $dataObject->{'content'} );
 
-        my $object;
+        my $o = JSON->new->decode( $dataObject->{'content'} );
 
-        if ($response->{'optimizations'}) {
-            $object = bless( $response, 'DataObjectOptimizations');
+        return $self->_recursive_bless($o, $returnType);
 
-            foreach my $optimization (@{$object->optimizations})
-            {
-                $optimization = bless( $optimization, 'DataObject' );
-            }
+    }
+}
 
-        } else {
-            $object =  bless( $response, 'DataObject' );
+sub getJsonObjectFromAPI_debug {
+    my ( $self, $returnType, $method, $url, $content, $params, $errorMessage );
+    if (@_ == 7)  {
+        ( $self, $returnType, $method, $url, $content, $params, $errorMessage ) = @_;
+    } else {
+        ( $self, $returnType, $method, $url, $content, $errorMessage ) = @_;
+    }
 
-            if ($object->addresses) {
-                foreach my $address (@{$object->addresses})
-                {
-                    $address = bless( $address, 'Address' );
-                }
-            }
+    my $dataObject = $self->_request($method, $url, $content, $params);
 
-            if ($object->routes) {
-                foreach my $route (@{$object->routes}) {
-                    $route = bless( $route, 'DataObjectRoute');
-                    foreach my $routeAddress (@{$route->addresses})
-                    {
-                        $routeAddress = bless( $routeAddress, 'Address' );
-                    }
-                }
-            }
+    print Dumper($dataObject);
 
+    if (!$dataObject->{'success'}) {
+        $$errorMessage = $dataObject->{'content'};
+        return;
+    } else {
+
+        my $o = JSON->new->decode( $dataObject->{'content'} );
+
+        return $self->_recursive_bless($o, $returnType);
+
+    }
+}
+
+sub _recursive_bless {
+    my ($self, $obj, $returnType) = @_;
+
+    if ($returnType =~ /ArrayRef\[([^\]]+)]/) {
+        my $type = $1;
+        foreach my $element (@{$obj})
+        {
+            $element = bless($element, $type);
+            $self->_bless_object_attributes($element);
         }
-
+        return @{$obj};
+    } else {
+        my $object = bless($obj, $returnType);
+        $self->_bless_object_attributes($object);
         return $object;
     }
 }
 
+sub _bless_object_attributes {
+    my ($self, $obj) = @_;
 
+    my $meta = $obj->meta;
 
-sub getJsonObjectFromAPI_debug {
-    my ( $self, $method, $url, $content, $params, $errorMessage );
-    if (@_ == 6)  {
-        ( $self, $method, $url, $content, $params, $errorMessage ) = @_;
-    } else {
-        ( $self, $method, $url, $content, $errorMessage ) = @_;
+    my @attributes;
+
+    for my $super ( $meta->superclasses() ) {
+        for my $attr ( map { $super->meta->get_attribute($_) }
+            sort $super->meta->get_attribute_list ) {
+            push( @attributes, $attr );
+
+        }
     }
 
-    my $dataObject = $self->_request($method, $url, $content, $params);
-
-    if (!$dataObject->{'success'}) {
-        $$errorMessage = $dataObject->{'content'};
-        return;
-    } else {
-        my $response = JSON->new->decode( $dataObject->{'content'} );
-
-        print Dumper($response);
-
-        my $object = bless( $response, 'DataObject' );
-
-        foreach my $address (@{$object->addresses})
-        {
-            $address = bless( $address, 'Address' );
-        }
-
-        if ($object->routes) {
-            foreach my $route (@{$object->routes}) {
-                $route = bless( $route, 'DataObjectRoute');
-                foreach my $routeAddress (@{$route->addresses})
-                {
-                    $routeAddress = bless( $routeAddress, 'Address' );
-                }
-            }
-        }
-
-        return $object;
+    for my $attr ( map { $meta->get_attribute($_) }
+        sort $meta->get_attribute_list ) {
+        push( @attributes, $attr );
     }
+
+    for my $attribute ( @attributes ) {
+        #print $attribute->name . "\n";
+        #print $attribute->type_constraint->name . "\n";
+        my $check1 = $attribute->type_constraint->is_subtype_of('Object') && !$attribute->type_constraint->is_a_type_of('Object');
+        my $check2 = $attribute->type_constraint->{'type_parameter'} ? $attribute->type_constraint->type_parameter->is_subtype_of('Object') : 0;
+        if ($check1 || $check2) {
+            #print $attribute->name . " " . $attribute->type_constraint->name . "\n";
+            $self->_recursive_bless($obj->{$attribute->name}, $attribute->type_constraint->name)
+        }
+    }
+
 }
 
 sub _post_form {
@@ -281,7 +454,48 @@ sub _request {
     return $response;
 }
 
+sub _get_query_string_parameters {
+    my $self = shift;
 
+    my $meta = $self->meta;
+
+    my $parameters = {};
+
+    for my $attribute ( map { $meta->get_attribute($_) }
+        sort $meta->get_attribute_list ) {
+
+        if ( $attribute->does('R4ME::Meta::Attribute::Trait::QueryString')
+            && $attribute->is_query_string ) {
+            my $reader = $attribute->get_read_method;
+            $parameters->{ $attribute->name } = $self->$reader;
+        }
+
+    }
+
+    return $parameters;
+
+}
+
+sub _get_non_query_string_parameters {
+    my $self = shift;
+
+    my $meta = $self->meta;
+
+    my $parameters = {};
+
+    for my $attribute ( map { $meta->get_attribute($_) }
+        sort $meta->get_attribute_list ) {
+
+        if ( !$attribute->does('R4ME::Meta::Attribute::Trait::QueryString')
+            || !$attribute->is_query_string ) {
+            my $reader = $attribute->get_read_method;
+            $parameters->{ $attribute->name } = $self->$reader;
+        }
+
+    }
+
+    return $parameters;
+}
 
 sub _createHttpClient {
     my ( $self ) = @_;
@@ -291,3 +505,4 @@ sub _createHttpClient {
     return $client;
 }
 1;
+

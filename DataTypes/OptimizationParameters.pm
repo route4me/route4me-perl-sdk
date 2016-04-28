@@ -1,10 +1,10 @@
 package OptimizationParameters;
 use Moose;
-use DataTypes::Address;
+use Address;
 
-has optimization_problem_id => (is => 'rw', isa => 'Str');
-has reoptimize => (is => 'rw', isa => 'Bool');
-has show_directions => (is => 'rw', isa => 'Bool');
+has optimization_problem_id => (traits => [qw/QueryString/], is => 'rw', isa => 'Str', query_string  => 1);
+has reoptimize => (traits => [qw/QueryString/], is => 'rw', isa => 'Bool', query_string  => 1);
+has show_directions => (traits => [qw/QueryString/], is => 'rw', isa => 'Bool', query_string  => 1);
 has parameters => (is => 'rw', isa => 'RouteParameters');
 has addresses => (is => 'rw', isa => 'ArrayRef[Address]');
 

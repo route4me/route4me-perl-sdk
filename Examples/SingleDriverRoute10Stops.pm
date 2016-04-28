@@ -2,19 +2,7 @@ package SingleDriverRoute10Stops;
 use strict;
 use warnings FATAL => 'all';
 use JSON;
-use Route4MeManager;
-use DataTypes::Address;
-use DataTypes::RouteParameters;
-use DataTypes::AlgorithmType;
-use DataTypes::Optimize;
-use DataTypes::DistanceUnit;
-use DataTypes::DeviceType;
-use DataTypes::OptimizationParameters;
-use DataTypes::DataObject;
-use DataTypes::DataObjectRoute;
-use R4MeUtils;
-use R4MEInfrastructureSettings;
-use Examples::ExamplesInfrastructure;
+
 use Data::Dumper;
 
 sub SingleDriverRoute10Stops {
@@ -57,7 +45,6 @@ sub SingleDriverRoute10Stops {
     my $errorString = "";
     my $dataObject = $route4Me->runOptimization($optimizationParameters, \$errorString);
 
-    print $errorString. "\n";
     ExamplesInfrastructure->PrintExampleOptimizationResult("SingleDriverRoute10Stops", $dataObject, $errorString);
 
     return $dataObject;

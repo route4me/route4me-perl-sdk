@@ -11,6 +11,6 @@ sub get_optimization_state {
         5 => 'Error',
         6 => 'ComputingDirections'
     );
-    return $map{$state};
+    return $state ? $map{$state} : "Undefined";
 }
 1;

@@ -92,7 +92,7 @@ sub SingleDriverRoundTripGeneric {
     my $content = R4MeUtils->serializeObjectToJson( $myParameters );
 
     my $errors;
-    my $dataObject = $route4Me->getJsonObjectFromAPI('POST', R4MEInfrastructureSettings->ApiHost, $content, $errors);
+    my $dataObject = $route4Me->getJsonObjectFromAPI('DataObject','POST', R4MEInfrastructureSettings->ApiHost, $content, $errors);
 
     if ($dataObject) {
         print "SingleDriverRoundTripGeneric executed successfully\n\n";
