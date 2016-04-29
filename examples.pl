@@ -26,6 +26,8 @@ use Examples::Routes::UpdateRoute;
 use Examples::Routes::ReoptimizeRoute;
 use Examples::Routes::GetRoute;
 use Examples::Routes::GetRoutes;
+use Examples::Routes::DeleteRoutes;
+use Examples::Routes::DuplicateRoute;
 use Examples::Users::GetUsers;
 use Examples::Activities::GetActivities;
 
@@ -138,7 +140,7 @@ if ($routeId_SingleDriverRoute10Stops) {
     ReoptimizeRoute->ReoptimizeRoute($routeId_SingleDriverRoute10Stops);
     GetRoute->GetRoute($routeId_SingleDriverRoute10Stops);
 } else {
-    print "UpdateRoute, ReoptimizeRoute, GetRoute not called. routeId_SingleDriverRoute10Stops == null. /n"
+    print "UpdateRoute, ReoptimizeRoute, GetRoute not called. routeId_SingleDriverRoute10Stops == null. \n"
 }
 
 GetRoutes->GetRoutes();
@@ -162,3 +164,54 @@ else
 {
     print("AddAddressNote, GetAddress, GetAddressNotes not called. routeIdToMoveTo == null || routeDestinationIdToMove == 0.\n");
 }
+
+my $routeId_DuplicateRoute;
+if ($routeId_SingleDriverRoute10Stops) {
+    $routeId_DuplicateRoute = DuplicateRoute->DuplicateRoute($routeId_SingleDriverRoute10Stops);
+} else {
+    print "DuplicateRoute not called. routeId_SingleDriverRoute10Stops == null.\n";
+}
+
+#disabled by default, not necessary for optimization tests
+#not all accounts are capable of storing gps data
+
+#if ($routeId_SingleDriverRoute10Stops) {
+#    SetGPSPosition->SetGPSPosition($routeId_SingleDriverRoute10Stops);
+#    TrackDeviceLastLocationHistory->TrackDeviceLastLocationHistory($routeId_SingleDriverRoute10Stops);
+#} else {
+#    print "SetGPSPosition, TrackDeviceLastLocationHistory not called. routeId_SingleDriverRoute10Stops == null.\n";
+#}
+
+my @routeIdsToDelete;
+
+if ($routeId_SingleDriverRoute10Stops) {
+    push @routeIdsToDelete, $routeId_SingleDriverRoute10Stops;
+}
+if ($routeId_SingleDriverRoundTrip) {
+    push @routeIdsToDelete, $routeId_SingleDriverRoundTrip;
+}
+if ($routeId_DuplicateRoute) {
+    push @routeIdsToDelete, $routeId_DuplicateRoute;
+}
+if ($routeId_MultipleDepotMultipleDriver) {
+    push @routeIdsToDelete, $routeId_MultipleDepotMultipleDriver;
+}
+if ($routeId_MultipleDepotMultipleDriverTimeWindow) {
+    push @routeIdsToDelete, $routeId_MultipleDepotMultipleDriverTimeWindow;
+}
+if ($routeId_SingleDepotMultipleDriverNoTimeWindow) {
+    push @routeIdsToDelete, $routeId_SingleDepotMultipleDriverNoTimeWindow;
+}
+if ($routeId_MultipleDepotMultipleDriverWith24StopsTimeWindow) {
+    push @routeIdsToDelete, $routeId_MultipleDepotMultipleDriverWith24StopsTimeWindow;
+}
+if ($routeId_SingleDriverMultipleTimeWindows) {
+    push @routeIdsToDelete, $routeId_SingleDriverMultipleTimeWindows;
+}
+
+if (scalar @routeIdsToDelete > 0) {
+    DeleteRoutes->DeleteRoutes( @routeIdsToDelete );
+} else {
+    print "routeIdsToDelete.Count == 0. DeleteRoutes not called.\n";
+}
+

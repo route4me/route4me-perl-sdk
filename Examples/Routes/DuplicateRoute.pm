@@ -13,15 +13,19 @@ sub DuplicateRoute {
 
     my $errorString = "";
 
-    my $duplicateRecordId = $route4Me->duplicateRoute( $routeParameters, \$errorString );
+    my $duplicatedRouteId = $route4Me->duplicateRoute( $routeParameters, \$errorString );
 
     print "\n";
 
-    if ($duplicateRecordId) {
-        print "DuplicateRoute executed successfully, duplicated route ID: %s\n", $duplicateRecordId;
+    if ($duplicatedRouteId) {
+        printf "DuplicateRoute executed successfully, duplicated route ID: %s\n", $duplicatedRouteId;
     } else {
         printf "DuplicateRoute error: %s\n", $errorString;
     }
+
+    return $duplicatedRouteId;
 }
+
+
 
 1;

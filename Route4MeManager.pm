@@ -26,6 +26,8 @@ use DataTypes::User;
 use DataTypes::Links;
 use DataTypes::GetActivitiesResponse;
 use DataTypes::Activity;
+use DataTypes::DuplicateRouteResponse;
+use DataTypes::DeleteRouteResponse;
 use QueryTypes::HttpMethodType;
 use QueryTypes::ActivityParameters;
 use R4MeUtils;
@@ -115,11 +117,39 @@ sub getOptimizations {
 }
 
 sub deleteRoutes {
+    my ( $self, @routeIds, $errors ) = @_;
 
+    my $routes = join(',', @routeIds);
+    my $params = {route_id => $routes};
+
+    my $response = $self->getJsonObjectFromAPI('DeleteRouteResponse', HttpMethodType->Delete, R4MEInfrastructureSettings->RouteHost, undef, $params, $errors);
+
+    my @deletedRouteIds = undef;
+    if ($response)
+    {
+        @deletedRouteIds = @{$response->route_ids};
+    }
+    return @deletedRouteIds;
 }
 
 sub duplicateRoute {
+    my ( $self, $parameters, $errors ) = @_;
 
+    my $params = {%$parameters};
+    $params->{'to'} = 'none';
+
+    my $response = $self->getJsonObjectFromAPI('DuplicateRouteResponse', HttpMethodType->Get, R4MEInfrastructureSettings->DuplicateRoute, undef, $params, $errors);
+
+    my $routeId = undef;
+    if ($response && $response->success)
+    {
+        my $optimizationProblemId = $response->optimization_problem_id;
+        if ($optimizationProblemId)
+        {
+            $routeId = $self->getRouteId($optimizationProblemId, $errors);
+        }
+    }
+    return $routeId;
 }
 
 sub getRoute {
@@ -132,6 +162,24 @@ sub getRoute {
     my $result = $self->getJsonObjectFromAPI('DataObjectRoute', HttpMethodType->Get, R4MEInfrastructureSettings->RouteHost, $content, $params, $errors);
 
     return $result;
+
+}
+
+sub getRouteId {
+    my ($self, $optimizationProblemId, $errors) = @_;
+
+    my $params = {
+        optimization_problem_id => $optimizationProblemId,
+        wait_for_final_state => 1
+    };
+
+    my $response = $self->getJsonObjectFromAPI('DataObject', HttpMethodType->Get, R4MEInfrastructureSettings->ApiHost, undef, $params, $errors);
+    if ($response && $response->routes && scalar @{$response->routes} > 0)
+    {
+        my $routeId = @{$response->routes}[0]->route_id;
+        return $routeId;
+    }
+    return undef;
 
 }
 

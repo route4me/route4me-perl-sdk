@@ -19,6 +19,8 @@ sub GetAddress {
 
     my $dataObject = $route4Me->getAddress($addressParameters, $errorString);
 
+    print "\n";
+
     if ($dataObject) {
         print "GetAddress executed successfully\n";
 
