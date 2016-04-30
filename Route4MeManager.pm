@@ -25,9 +25,13 @@ use DataTypes::DataObjectRoute;
 use DataTypes::User;
 use DataTypes::Links;
 use DataTypes::GetActivitiesResponse;
+use DataTypes::GetAddressBookContactsResponse;
+use DataTypes::RemoveAddressBookContactsRequest;
 use DataTypes::Activity;
+use DataTypes::AvoidanceZone;
 use DataTypes::DuplicateRouteResponse;
 use DataTypes::DeleteRouteResponse;
+use DataTypes::TrackingHistory;
 use QueryTypes::HttpMethodType;
 use QueryTypes::ActivityParameters;
 use R4MeUtils;
@@ -345,6 +349,115 @@ sub removeRouteDestination {
     }
 }
 
+sub addAddressBookContact {
+    my ($self, $contact, $errorString) = @_;
+
+    my $content = R4MeUtils->serializeObjectToJson( $contact );
+
+    my $object = $self->getJsonObjectFromAPI('AddressBookContact', HttpMethodType->Post, R4MEInfrastructureSettings->AddressBook, $content, $errorString);
+
+    return $object;
+
+}
+
+sub getAddressBookContacts {
+
+    my ($self, $addressBookParameters, $total, $errorString) = @_;
+
+    $$total = 0;
+    my @result = undef;
+
+    my $params = _get_query_string_parameters($addressBookParameters);
+
+
+    my $response = $self->getJsonObjectFromAPI('GetAddressBookContactsResponse', HttpMethodType->Get, R4MEInfrastructureSettings->AddressBook, undef, $params, $errorString);
+
+    if ($response) {
+        @result = @{$response->results};
+        $$total = $response->total;
+    }
+
+    return @result;
+}
+
+sub updateAddressBookContact {
+    my ($self, $contact, $errorString) = @_;
+
+    my $content = R4MeUtils->serializeObjectToJson( $contact );
+
+    my $object = $self->getJsonObjectFromAPI('AddressBookContact', HttpMethodType->Put, R4MEInfrastructureSettings->AddressBook, $content, $errorString);
+
+    return $object;
+}
+
+sub removeAddressBookContacts {
+    my ($self, $addressIds, $errorString) = @_;
+
+    my $request = RemoveAddressBookContactsRequest->new(
+        address_ids => $addressIds
+    );
+
+    my $content = R4MeUtils->serializeObjectToJson( $request );
+
+    my $response = $self->getJsonObjectFromAPI('AddressBookContact', HttpMethodType->Delete, R4MEInfrastructureSettings->AddressBook, $content, $errorString);
+
+    if ($response && $response->{'status'})
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+
+}
+
+sub addAvoidanceZone {
+
+    my ($self, $avoidanceZoneParameters, $errorString) = @_;
+
+    my $content = R4MeUtils->serializeObjectToJson( $avoidanceZoneParameters );
+
+    my $avoidanceZone = $self->getJsonObjectFromAPI('AvoidanceZone', HttpMethodType->Post, R4MEInfrastructureSettings->Avoidance, $content, $errorString);
+
+    return $avoidanceZone;
+
+}
+
+sub getAvoidanceZones {
+    my ($self, $avoidanceZoneQuery, $errorString) = @_;
+
+    my $content = R4MeUtils->serializeObjectToJson( $avoidanceZoneQuery );
+
+    my @avoidanceZones = $self->getJsonObjectFromAPI('ArrayRef[AvoidanceZone]', HttpMethodType->Get, R4MEInfrastructureSettings->Avoidance, $content, $errorString);
+
+    return @avoidanceZones;
+}
+
+sub updateAvoidanceZone {
+    my ($self, $avoidanceZoneQuery, $errorString) = @_;
+
+    my $params = _get_query_string_parameters($avoidanceZoneQuery);
+
+    my $content = R4MeUtils->serializeObjectToJson( _get_non_query_string_parameters($avoidanceZoneQuery) );
+
+    my $avoidanceZone = $self->getJsonObjectFromAPI('AvoidanceZone', HttpMethodType->Put, R4MEInfrastructureSettings->Avoidance, $content, $params, $errorString);
+
+    return $avoidanceZone;
+}
+
+sub deleteAvoidanceZone {
+    my ($self, $avoidanceZoneQuery, $errorString) = @_;
+
+    my $params = _get_query_string_parameters($avoidanceZoneQuery);
+
+    my $content = R4MeUtils->serializeObjectToJson( _get_non_query_string_parameters($avoidanceZoneQuery) );
+
+    $self->getJsonObjectFromAPI('AvoidanceZone', HttpMethodType->Delete, R4MEInfrastructureSettings->Avoidance, $content, $params, \$errorString);
+
+    return !($errorString eq "");
+}
+
 sub moveDestinationToRoute {
     my ( $self, $toRouteId, $routeDestinationId, $afterDestinationId, $errorString ) = @_;
 
@@ -357,6 +470,26 @@ sub moveDestinationToRoute {
     } else {
         return 0;
     }
+
+}
+
+sub setGPS {
+    my ( $self, $gpsParameters, $errorString ) = @_;
+
+    my $params = _get_query_string_parameters($gpsParameters);
+
+    my $result = $self->getJsonObjectFromAPI('Str', HttpMethodType->Get, R4MEInfrastructureSettings->SetGpsHost, undef, $params, \$errorString);
+
+    return $result;
+}
+
+sub getLastLocation {
+    my ( $self, $parameters, $errorString ) = @_;
+
+    my $result = $self->getJsonObjectFromAPI('DataObject', HttpMethodType->Get, R4MEInfrastructureSettings->RouteHost, undef, $parameters, \$errorString);
+
+    return $result;
+
 
 }
 
@@ -377,7 +510,11 @@ sub getJsonObjectFromAPI {
 
         my $o = JSON->new->decode( $dataObject->{'content'} );
 
-        return $self->_recursive_bless($o, $returnType);
+        if ($returnType eq 'Str') {
+            return $o;
+        } else {
+            return $self->_recursive_bless( $o, $returnType );
+        }
 
     }
 }
