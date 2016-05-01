@@ -97,7 +97,12 @@ package SingleDriverRoundTrip;
 use strict;
 use warnings FATAL => 'all';
 use Data::Dumper;
-use DataTypes::TravelMode;
+use Route4MeSDK::DataTypes::TravelMode;
+use Route4MeSDK::Route4MeManager;
+use Route4MeSDK::DataTypes::RouteParameters;
+use Route4MeSDK::DataTypes::OptimizationParameters
+use Route4MeSDK::DataTypes::Address;
+use Route4MeSDK::ExamplesInfrastructure;
 
 sub SingleDriverRoundTrip {
     my $route4Me = Route4MeManager->new(ExamplesInfrastructure->ApiKey);
@@ -164,6 +169,11 @@ sub SingleDriverRoundTrip {
 package MultipleDepotMultipleDriver;
 use strict;
 use warnings FATAL => 'all';
+use Route4MeSDK::Route4MeManager;
+use Route4MeSDK::DataTypes::RouteParameters;
+use Route4MeSDK::DataTypes::OptimizationParameters
+use Route4MeSDK::DataTypes::Address;
+use Route4MeSDK::ExamplesInfrastructure;
 
 sub MultipleDepotMultipleDriver {
 
